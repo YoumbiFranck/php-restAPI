@@ -4,6 +4,7 @@
 declare(strict_types=1);
 require __DIR__ . '/autoload.php';
 require __DIR__ . '/headers.php';
+$config = require __DIR__ . 'database/config.php';
 set_exception_handler('ErrorHandler::handleException');
 
 // ici on veut recupérer chaque partie de l'url
@@ -19,7 +20,8 @@ if ($parts[2] != 'products') {
 $id = $parts[3] ?? null;
 # var_dump($id);
 
-$database = new Database('localhost', 'root', 'root', 'php_lern');
+
+$database = new Database($config['host'], $config['username'], $config['password'], $config['database']);
 
 $productGateway = new ProductGateway($database);
 
