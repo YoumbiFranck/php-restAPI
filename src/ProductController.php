@@ -33,7 +33,47 @@ class ProductController
      */
     private function processRessourceRequest(string $method , string $id): void 
     {
+        $product = $this->productGateway->get($id);
+        if (!$product) {
+            http_response_code(404);
+            echo json_encode(["message" => "Das Produkt wurde nicht gefunden"]);
+            return;
+        }
+        switch ($method){
+            case "GET":
+                echo json_encode($product);
+                break;
+            case "PATCH": // {"name" : "Franck", "size" : 44, "is_available" : 0} body request
+                $data = (array) json_decode(file_get_contents('php://input'), true);
+                $errors = $this->getValidationErrors($data, false);
 
+                if (!empty($errors)) {
+                    http_response_code(422); // (422 Unprocessable Entity) indique que le serveur a compris le type de contenu de la requête et que la syntaxe de la requête est correcte mais que le serveur n'a pas été en mesure de réaliser les instructions demandées.
+                    echo json_encode(["errors" => $errors]);
+                    break;
+                }
+
+                $rows = $this->productGateway->update($product, $data);
+
+                echo json_encode([
+                    "message" => "product $id updated",
+                    "rows" => $rows
+                ]);
+                break;
+
+            case "DELETE":
+                $rows= $this->productGateway->delete($id);
+                echo json_encode([
+                    "message" => " Das Produkt $id wurde gelöscht",
+                    "rows" => $rows
+                ]);
+                break;
+            default:
+                http_response_code(405);
+                header("Allow: GET, PATCH, DELETE");
+                break;            
+        }
+        # echo 
     }
 
     /**
@@ -49,12 +89,48 @@ class ProductController
                 break;
             case 'POST':
                 #echo $this->createProduct();
+                $data = (array) json_decode(file_get_contents('php://input'), true);
+                $errors = $this->getValidationErrors($data);
+                
+                if(!empty($errors)){
+                    http_response_code(422); // (422 Unprocessable Entity) indique que le serveur a compris le type de contenu de la requête et que la syntaxe de la requête est correcte mais que le serveur n'a pas été en mesure de réaliser les instructions demandées.
+                    echo json_encode(["errors" => $errors]);
+                    break;
+                }
+
+                $id = $this->productGateway->create($data);
+
+                http_response_code(201);
+                echo json_encode([
+                    "message" => "product created",
+                    "id" => $id
+                ]);
                 break;
             default:
                 http_response_code(405);
+                header("Allow: GET, POST");
                 break;
         }
       
+    }
+
+    private function getValidationErrors(array $data, bool $is_new_record = true): array
+    {
+        $errors = [];
+        
+            if ($is_new_record && empty($data["name"])) {
+                $errors[] = "name is required";
+            }
+       
+        
+
+        if (array_key_exists("size", $data)){
+            if(filter_var($data["size"], FILTER_VALIDATE_INT) === false ){
+                $errors[] = "size must be an intiger";
+            }
+        }
+
+        return $errors;
     }
 
 

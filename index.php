@@ -1,10 +1,12 @@
 <?php
 # echo "Hello, World! This is a test file.";
+# http://localhost/php-restapi/
 # var_dump($_SERVER['REQUEST_URI']);
 declare(strict_types=1);
 require __DIR__ . '/autoload.php';
 require __DIR__ . '/headers.php';
-$config = require __DIR__ . 'database/config.php';
+$config = require __DIR__ . '/database/config.php';
+set_error_handler("ErrorHandler::handleError");
 set_exception_handler('ErrorHandler::handleException');
 
 // ici on veut recupérer chaque partie de l'url
